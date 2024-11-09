@@ -82,15 +82,12 @@ const AuraBoard = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleAddProject = (e) => {
-    e.preventDefault();
-    if (!newProjectTitle.trim()) return;
-
+  const handleAddProject = (projectData) => {
     const newProject = {
       id: Date.now().toString(),
-      title: newProjectTitle.trim(),
-      color: colors[Math.floor(Math.random() * colors.length)],
-      columns: [
+      title: projectData?.title || newProjectTitle.trim() || 'New Project',
+      color: projectData?.color || colors[Math.floor(Math.random() * colors.length)],
+      columns: projectData?.columns || [
         { 
           id: 'todo', 
           title: 'To Do',
@@ -127,6 +124,31 @@ const AuraBoard = () => {
     setProjects([...projects, newProject]);
     setNewProjectTitle('');
     setIsAddingProject(false);
+    return newProject;
+  };
+
+  const handleCreateTask = (projectId, taskData) => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+
+    const newTask = {
+      id: `task-${Date.now()}-${Math.random()}`,
+      createdAt: new Date().toISOString(),
+      ...taskData
+    };
+
+    // Add task to the first column (usually "To Do")
+    const updatedProject = {
+      ...project,
+      columns: project.columns.map((col, index) => 
+        index === 0 
+          ? { ...col, tasks: [...col.tasks, newTask] }
+          : col
+      )
+    };
+
+    handleUpdateProject(updatedProject);
+    return newTask;
   };
 
   const handleUpdateProject = (updatedProject) => {
@@ -263,7 +285,10 @@ const AuraBoard = () => {
           {isAddingProject && currentView !== 'canvas' && (
             <div className="mb-4 md:mb-8 bg-white dark:bg-dark-card p-4 md:p-6 rounded-xl 
               shadow-aura border border-surface-200 dark:border-dark-border transition-colors duration-200">
-              <form onSubmit={handleAddProject}>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                handleAddProject();
+              }}>
                 <h3 className="text-base md:text-lg font-semibold mb-4 text-surface-800 dark:text-dark-text">
                   Create New Project
                 </h3>
@@ -320,6 +345,8 @@ const AuraBoard = () => {
               onMoveUp={moveProjectUp}
               onMoveDown={moveProjectDown}
               allTasks={getAllTasks()}
+              onCreateProject={handleAddProject}
+              onCreateTask={handleCreateTask}
             />
           )}
 

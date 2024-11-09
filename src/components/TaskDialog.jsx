@@ -92,22 +92,22 @@ const TaskDialog = ({
 
   return (
     <div 
-      className="fixed inset-0 z-50 overflow-hidden bg-surface-900/20 dark:bg-black/40 
-        backdrop-blur-sm transition-colors duration-200"
+      className="fixed inset-0 z-50 bg-surface-900/20 dark:bg-black/40 
+        backdrop-blur-sm transition-colors duration-200 overflow-y-auto"
       onClick={handleBackdropClick}
     >
-      <div className="flex items-center justify-center min-h-screen p-4">
-        {/* Backdrop */}
-        <div className="fixed inset-0 bg-black bg-opacity-30 dark:bg-opacity-50 
-          transition-opacity duration-300" />
-
+      <div className="min-h-screen flex items-center justify-center p-4">
         {/* Dialog */}
-        <div className="relative bg-white dark:bg-dark-card rounded-xl shadow-aura-lg dark:shadow-none 
-          w-full max-w-3xl my-4 transition-all duration-300 ease-out transform flex flex-col 
-          max-h-[calc(100vh-2rem)] overflow-hidden border border-surface-200 dark:border-dark-border">
+        <div className={`
+          relative bg-white dark:bg-dark-card rounded-xl shadow-aura-lg dark:shadow-none 
+          w-full max-w-3xl transition-all duration-300 ease-out transform
+          border border-surface-200 dark:border-dark-border
+          ${isMobile ? 'min-h-screen' : 'my-4'}
+          flex flex-col
+        `}>
           {/* Header */}
-          <div className="flex justify-between items-center p-4 sm:p-6 border-b border-surface-200 
-            dark:border-dark-border flex-shrink-0">
+          <div className="flex-shrink-0 flex justify-between items-center p-4 sm:p-6 
+            border-b border-surface-200 dark:border-dark-border bg-white dark:bg-dark-card">
             <h2 className="text-xl font-semibold text-surface-800 dark:text-dark-text pr-8">
               {isNewTask ? 'Create New Task' : 'Edit Task'}
             </h2>
@@ -122,58 +122,66 @@ const TaskDialog = ({
           </div>
 
           {/* Content */}
-          <div className={`flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-6 space-y-8 
-            ${isMobile ? 'pb-24' : ''}`}>
-            <TaskMetadataForm
-              title={title}
-              setTitle={setTitle}
-              description={description}
-              setDescription={setDescription}
-              startDate={startDate}
-              setStartDate={setStartDate}
-              dueDate={dueDate}
-              setDueDate={setDueDate}
-              status={status}
-              setStatus={setStatus}
-              availableColumns={availableColumns}
-            />
-
-            <TaskHierarchySelect
-              selectedType={hierarchyType}
-              onTypeSelect={setHierarchyType}
-            />
-
-            <TaskPrioritySelect
-              selectedPriority={priority}
-              onPrioritySelect={setPriority}
-            />
-
-            <TaskLabelSelect
-              availableLabels={availableLabels}
-              selectedLabels={selectedLabels}
-              isAddingLabel={isAddingLabel}
-              setIsAddingLabel={setIsAddingLabel}
-              newLabelText={newLabelText}
-              setNewLabelText={setNewLabelText}
-              onLabelToggle={handleLabelToggle}
-              onAddLabel={handleAddNewLabel}
-            />
-
-            {!isNewTask && (
-              <TaskRelationshipSelect
-                currentTask={currentTaskMetadata}
-                relationships={relationships}
-                availableTasks={availableTasks}
-                onAddRelationship={handleAddRelationship}
-                onRemoveRelationship={handleRemoveRelationship}
+          <div className="flex-1 overflow-y-auto">
+            <div className={`
+              px-4 sm:px-6 py-6 space-y-8 
+              ${isMobile ? 'pb-32' : ''}
+            `}>
+              <TaskMetadataForm
+                title={title}
+                setTitle={setTitle}
+                description={description}
+                setDescription={setDescription}
+                startDate={startDate}
+                setStartDate={setStartDate}
+                dueDate={dueDate}
+                setDueDate={setDueDate}
+                status={status}
+                setStatus={setStatus}
+                availableColumns={availableColumns}
               />
-            )}
+
+              <TaskHierarchySelect
+                selectedType={hierarchyType}
+                onTypeSelect={setHierarchyType}
+              />
+
+              <TaskPrioritySelect
+                selectedPriority={priority}
+                onPrioritySelect={setPriority}
+              />
+
+              <TaskLabelSelect
+                availableLabels={availableLabels}
+                selectedLabels={selectedLabels}
+                isAddingLabel={isAddingLabel}
+                setIsAddingLabel={setIsAddingLabel}
+                newLabelText={newLabelText}
+                setNewLabelText={setNewLabelText}
+                onLabelToggle={handleLabelToggle}
+                onAddLabel={handleAddNewLabel}
+              />
+
+              {!isNewTask && (
+                <TaskRelationshipSelect
+                  currentTask={currentTaskMetadata}
+                  relationships={relationships}
+                  availableTasks={availableTasks}
+                  onAddRelationship={handleAddRelationship}
+                  onRemoveRelationship={handleRemoveRelationship}
+                />
+              )}
+            </div>
           </div>
 
           {/* Footer */}
-          <div className={`flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-surface-200 
-            dark:border-dark-border bg-surface-50/50 dark:bg-dark-hover/30 flex-shrink-0 
-            transition-colors duration-200 ${isMobile ? 'fixed bottom-0 left-0 right-0 shadow-lg' : ''}`}>
+          <div className={`
+            flex-shrink-0 flex justify-end gap-3 px-4 sm:px-6 py-4 
+            border-t border-surface-200 dark:border-dark-border 
+            bg-surface-50/50 dark:bg-dark-hover/30
+            transition-colors duration-200
+            ${isMobile ? 'fixed bottom-0 left-0 right-0 shadow-lg' : ''}
+          `}>
             <button
               onClick={() => handleClose(false)}
               className="px-4 py-2 text-surface-700 dark:text-dark-text hover:text-surface-800 

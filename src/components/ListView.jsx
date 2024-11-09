@@ -1,9 +1,11 @@
-import React from 'react';
-import { ArrowUpDown, Filter, SortAsc, Calendar, Tag } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowUpDown, Filter, SortAsc, Calendar, Tag, Plus, FolderPlus } from 'lucide-react';
 import TaskListItem from './TaskListItem';
 import ListViewColumns, { defaultColumns } from './ListViewColumns';
 import { useListView } from '../hooks/useListView';
 import { useTaskActions } from '../hooks/useTaskActions';
+import TaskDialog from './TaskDialog';
+import { useTheme } from '../hooks/useTheme';
 
 const ListView = ({ 
   projects = [], 
@@ -11,8 +13,14 @@ const ListView = ({
   onDeleteProject,
   onMoveUp,
   onMoveDown,
-  allTasks = []
+  allTasks = [],
+  onCreateProject,
+  onCreateTask
 }) => {
+  const { theme } = useTheme();
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
+
   const {
     sortBy,
     sortDirection,
@@ -62,14 +70,79 @@ const ListView = ({
     return acc;
   }, []);
 
-  // If there are no tasks, show a message
-  if (!allTasks || allTasks.length === 0) {
+  // Show empty state only when there are no tasks in _debug.allTasks
+  if (_debug.allTasks.length === 0) {
     return (
       <div className="bg-white dark:bg-dark-card rounded-xl shadow-aura dark:shadow-none 
         border border-surface-200 dark:border-dark-border p-8 text-center">
-        <p className="text-surface-600 dark:text-dark-text/80 text-lg">
-          No tasks found. Create a task in any project to see it here.
-        </p>
+        <div className="max-w-md mx-auto space-y-6">
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold text-surface-800 dark:text-dark-text">
+              No tasks yet
+            </h3>
+            <p className="text-surface-600 dark:text-dark-text/80">
+              Create your first task or start a new project to get organized
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {projects.length > 0 && (
+              <div className="flex-1">
+                <select
+                  onChange={(e) => {
+                    setSelectedProjectId(e.target.value);
+                    setIsTaskDialogOpen(true);
+                  }}
+                  className="w-full px-4 py-2 bg-white dark:bg-dark-hover border border-surface-200 
+                    dark:border-dark-border rounded-lg text-surface-800 dark:text-dark-text
+                    focus:outline-none focus:ring-2 focus:ring-aura-200 dark:focus:ring-aura-500/30"
+                  defaultValue=""
+                >
+                  <option value="" disabled>Select a project</option>
+                  {projects.map(project => (
+                    <option key={project.id} value={project.id}>
+                      {project.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            
+            <button
+              onClick={() => onCreateProject()}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 
+                bg-surface-100 dark:bg-dark-hover hover:bg-surface-200 
+                dark:hover:bg-dark-hover/70 text-surface-800 dark:text-dark-text 
+                rounded-lg transition-colors duration-200"
+            >
+              <FolderPlus size={20} />
+              New Project
+            </button>
+          </div>
+        </div>
+
+        {isTaskDialogOpen && (
+          <TaskDialog
+            task={{}}
+            isOpen={isTaskDialogOpen}
+            onClose={() => {
+              setIsTaskDialogOpen(false);
+              setSelectedProjectId(null);
+            }}
+            onUpdate={(taskData) => {
+              if (selectedProjectId) {
+                onCreateTask(selectedProjectId, taskData);
+              }
+              setIsTaskDialogOpen(false);
+              setSelectedProjectId(null);
+            }}
+            availableLabels={allLabels}
+            availableTasks={allTasks}
+            availableColumns={
+              projects.find(p => p.id === selectedProjectId)?.columns || []
+            }
+          />
+        )}
       </div>
     );
   }
