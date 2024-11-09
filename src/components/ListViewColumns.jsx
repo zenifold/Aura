@@ -6,14 +6,14 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 const defaultColumns = [
-  { id: 'title', label: 'Title', required: true },
-  { id: 'status', label: 'Status' },
-  { id: 'priority', label: 'Priority' },
-  { id: 'dueDate', label: 'Due Date' },
-  { id: 'relationships', label: 'Relationships' },
-  { id: 'labels', label: 'Labels' },
-  { id: 'tags', label: 'Tags' },
-  { id: 'project', label: 'Project' }
+  { id: 'title', label: 'Title', required: true, width: '40%' },
+  { id: 'status', label: 'Status', width: '120px' },
+  { id: 'priority', label: 'Priority', width: '100px' },
+  { id: 'dueDate', label: 'Due Date', width: '120px' },
+  { id: 'relationships', label: 'Relationships', width: '150px' },
+  { id: 'labels', label: 'Labels', width: '150px' },
+  { id: 'tags', label: 'Tags', width: '150px' },
+  { id: 'project', label: 'Project', width: '150px' }
 ];
 
 const SortableColumnItem = ({ column, isActive, onToggle }) => {

@@ -2,8 +2,10 @@ import React from 'react';
 import { Calendar } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
+import "./DatePicker.css";
 import { useAutoResize } from '../hooks/useAutoResize';
 import { useTheme } from '../hooks/useTheme';
+import TaskHierarchySelect from './TaskHierarchySelect';
 
 const TaskMetadataForm = ({
   title,
@@ -16,17 +18,21 @@ const TaskMetadataForm = ({
   setDueDate,
   status,
   setStatus,
+  hierarchyType,
+  setHierarchyType,
   availableColumns = []
 }) => {
   const titleInputRef = useAutoResize(title);
   const { theme } = useTheme();
 
-  const DateInput = ({ value, onClick, placeholder }) => (
-    <div className="relative w-full" onClick={onClick}>
+  const DateInput = React.forwardRef(({ value, onClick, placeholder }, ref) => (
+    <div className="relative w-full">
       <input
+        ref={ref}
         type="text"
         value={value || ''}
         readOnly
+        onClick={onClick}
         placeholder={placeholder}
         className="w-full pl-10 pr-3 py-2 border border-surface-200 dark:border-dark-border rounded-lg 
           focus:outline-none focus:ring-2 focus:ring-aura-200 dark:focus:ring-aura-500/30 
@@ -38,6 +44,40 @@ const TaskMetadataForm = ({
         size={16} 
         className="absolute left-3 top-1/2 transform -translate-y-1/2 text-surface-400 
           dark:text-dark-text/60 pointer-events-none" 
+      />
+    </div>
+  ));
+
+  DateInput.displayName = 'DateInput';
+
+  const renderDatePicker = (selected, onChange, placeholder, minDate = null) => (
+    <div className="relative" style={{ zIndex: 1 }}>
+      <DatePicker
+        selected={selected ? new Date(selected) : null}
+        onChange={(date) => onChange(date ? date.toISOString() : null)}
+        customInput={<DateInput placeholder={placeholder} />}
+        dateFormat="MMM d, yyyy"
+        isClearable
+        minDate={minDate}
+        placeholderText={placeholder}
+        popperClassName="date-picker-popper"
+        popperPlacement="bottom-start"
+        popperModifiers={[
+          {
+            name: "offset",
+            options: {
+              offset: [0, 4]
+            }
+          },
+          {
+            name: "preventOverflow",
+            options: {
+              boundary: 'viewport',
+              padding: 8
+            }
+          }
+        ]}
+        shouldCloseOnSelect
       />
     </div>
   );
@@ -107,67 +147,28 @@ const TaskMetadataForm = ({
         </select>
       </div>
 
+      {/* Task Type */}
+      <TaskHierarchySelect
+        selectedType={hierarchyType}
+        onTypeSelect={setHierarchyType}
+      />
+
       {/* Dates */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Start Date */}
-        <div>
+        <div className="relative" style={{ zIndex: 2 }}>
           <label className="block text-sm font-medium text-surface-600 dark:text-dark-text/80 mb-1.5">
             Start Date
           </label>
-          <DatePicker
-            selected={startDate ? new Date(startDate) : null}
-            onChange={(date) => setStartDate(date ? date.toISOString() : null)}
-            customInput={<DateInput placeholder="Select start date" />}
-            dateFormat="MMM d, yyyy"
-            isClearable
-            placeholderText="Select start date"
-            className="w-full"
-            calendarClassName="shadow-lg border border-surface-200 dark:border-dark-border 
-              bg-white dark:bg-dark-card rounded-lg"
-            dayClassName={date => 
-              `hover:bg-aura-50 dark:hover:bg-dark-hover hover:text-aura-600 dark:hover:text-aura-400`
-            }
-            popperClassName="z-[1000]"
-            popperModifiers={[
-              {
-                name: "preventOverflow",
-                options: {
-                  padding: 16
-                }
-              }
-            ]}
-          />
+          {renderDatePicker(startDate, setStartDate, "Select start date")}
         </div>
 
         {/* Due Date */}
-        <div>
+        <div className="relative" style={{ zIndex: 2 }}>
           <label className="block text-sm font-medium text-surface-600 dark:text-dark-text/80 mb-1.5">
             Due Date
           </label>
-          <DatePicker
-            selected={dueDate ? new Date(dueDate) : null}
-            onChange={(date) => setDueDate(date ? date.toISOString() : null)}
-            customInput={<DateInput placeholder="Select due date" />}
-            dateFormat="MMM d, yyyy"
-            isClearable
-            minDate={startDate ? new Date(startDate) : null}
-            placeholderText="Select due date"
-            className="w-full"
-            calendarClassName="shadow-lg border border-surface-200 dark:border-dark-border 
-              bg-white dark:bg-dark-card rounded-lg"
-            dayClassName={date => 
-              `hover:bg-aura-50 dark:hover:bg-dark-hover hover:text-aura-600 dark:hover:text-aura-400`
-            }
-            popperClassName="z-[1000]"
-            popperModifiers={[
-              {
-                name: "preventOverflow",
-                options: {
-                  padding: 16
-                }
-              }
-            ]}
-          />
+          {renderDatePicker(dueDate, setDueDate, "Select due date", startDate ? new Date(startDate) : null)}
         </div>
       </div>
     </div>

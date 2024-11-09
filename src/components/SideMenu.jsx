@@ -12,7 +12,8 @@ import {
   Sparkles,
   Palette,
   ChevronLeft,
-  Pencil
+  Pencil,
+  StickyNote
 } from 'lucide-react';
 import ThemePicker from './ThemePicker';
 import { useTheme } from '../hooks/useTheme.jsx';
@@ -58,6 +59,7 @@ const SideMenu = ({
         { id: 'list', icon: (collapsed) => <ListTodo size={getIconSize(collapsed)} />, label: 'List View' },
         { id: 'canvas', icon: (collapsed) => <Pencil size={getIconSize(collapsed)} />, label: 'Canvas View' },
         { id: 'calendar', icon: (collapsed) => <Calendar size={getIconSize(collapsed)} />, label: 'Calendar' },
+        { id: 'notes', icon: (collapsed) => <StickyNote size={getIconSize(collapsed)} />, label: 'Notes' },
       ]
     },
     {

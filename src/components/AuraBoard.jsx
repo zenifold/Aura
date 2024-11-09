@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Search } from 'lucide-react';
 import ProjectRow from './ProjectRow';
 import SideMenu from './SideMenu';
 import ListView from './ListView';
 import CanvasView from './CanvasView';
+import CalendarView from './CalendarView';
+import NotesView from './NotesView';
 import { loadState, saveState } from '../utils/storage';
 import { colors } from './ColorPicker';
 import { useProjectSort } from '../hooks/useProjectSort';
@@ -46,32 +48,59 @@ const defaultProject = {
   ]
 };
 
+const defaultState = {
+  projects: [defaultProject],
+  currentView: 'board',
+  menuCollapsed: false
+};
+
 const AuraBoard = () => {
-  const [projects, setProjects] = useState(() => {
-    const savedState = loadState();
-    return savedState?.projects || [defaultProject];
-  });
-
-  const [currentView, setCurrentView] = useState(() => {
-    const savedState = loadState();
-    return savedState?.currentView || 'board';
-  });
-
+  const [state, setState] = useState(defaultState);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [newProjectTitle, setNewProjectTitle] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isMenuCollapsed, setIsMenuCollapsed] = useState(() => {
-    const savedState = loadState();
-    return savedState?.menuCollapsed || false;
-  });
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  const { moveProjectUp, moveProjectDown } = useProjectSort(projects, setProjects);
-
+  // Load initial state
   useEffect(() => {
-    saveState({ projects, currentView, menuCollapsed: isMenuCollapsed });
-  }, [projects, currentView, isMenuCollapsed]);
+    const loadInitialState = async () => {
+      try {
+        const savedState = await loadState();
+        if (savedState?.projects) {
+          setState(prevState => ({
+            ...prevState,
+            projects: savedState.projects,
+            currentView: savedState.currentView || prevState.currentView,
+            menuCollapsed: savedState.menuCollapsed || prevState.menuCollapsed
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading state:', error);
+        // On error, keep using default state
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadInitialState();
+  }, []);
+
+  // Save state when it changes
+  useEffect(() => {
+    if (!isLoading) {
+      const saveTimeout = setTimeout(async () => {
+        try {
+          await saveState(state);
+        } catch (error) {
+          console.error('Error saving state:', error);
+        }
+      }, 1000);
+
+      return () => clearTimeout(saveTimeout);
+    }
+  }, [state, isLoading]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -82,124 +111,123 @@ const AuraBoard = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const setProjects = useCallback((newProjects) => {
+    setState(prevState => ({
+      ...prevState,
+      projects: typeof newProjects === 'function' ? newProjects(prevState.projects) : newProjects
+    }));
+  }, []);
+
+  const setCurrentView = useCallback((newView) => {
+    setState(prevState => ({
+      ...prevState,
+      currentView: newView
+    }));
+  }, []);
+
+  const setIsMenuCollapsed = useCallback((newCollapsed) => {
+    setState(prevState => ({
+      ...prevState,
+      menuCollapsed: newCollapsed
+    }));
+  }, []);
+
+  const { moveProjectUp, moveProjectDown } = useProjectSort(state.projects, setProjects);
+
   const handleAddProject = (projectData) => {
     const newProject = {
       id: Date.now().toString(),
       title: projectData?.title || newProjectTitle.trim() || 'New Project',
       color: projectData?.color || colors[Math.floor(Math.random() * colors.length)],
-      columns: projectData?.columns || [
-        { 
-          id: 'todo', 
-          title: 'To Do',
-          color: {
-            light: 'bg-surface-100',
-            text: 'text-surface-600',
-            dark: 'dark:bg-dark-hover'
-          },
-          tasks: [] 
-        },
-        { 
-          id: 'in-progress', 
-          title: 'In Progress',
-          color: {
-            light: 'bg-blue-50',
-            text: 'text-blue-600',
-            dark: 'dark:bg-blue-500/10'
-          },
-          tasks: [] 
-        },
-        { 
-          id: 'done', 
-          title: 'Done',
-          color: {
-            light: 'bg-green-50',
-            text: 'text-green-600',
-            dark: 'dark:bg-green-500/10'
-          },
-          tasks: [] 
-        }
-      ]
+      columns: defaultProject.columns.map(col => ({ ...col, tasks: [] }))
     };
 
-    setProjects([...projects, newProject]);
+    setState(prevState => ({
+      ...prevState,
+      projects: [...prevState.projects, newProject]
+    }));
     setNewProjectTitle('');
     setIsAddingProject(false);
     return newProject;
   };
 
-  const handleCreateTask = (projectId, taskData) => {
-    const project = projects.find(p => p.id === projectId);
-    if (!project) return;
+  const handleCreateTask = (projectId, columnId, taskTitle) => {
+    setState(prevState => {
+      const projectIndex = prevState.projects.findIndex(p => p.id === projectId);
+      if (projectIndex === -1) return prevState;
 
-    const newTask = {
-      id: `task-${Date.now()}-${Math.random()}`,
-      createdAt: new Date().toISOString(),
-      ...taskData
-    };
+      const project = prevState.projects[projectIndex];
+      const columnIndex = project.columns.findIndex(c => c.id === columnId);
+      if (columnIndex === -1) return prevState;
 
-    // Add task to the first column (usually "To Do")
-    const updatedProject = {
-      ...project,
-      columns: project.columns.map((col, index) => 
-        index === 0 
-          ? { ...col, tasks: [...col.tasks, newTask] }
-          : col
-      )
-    };
+      const newTask = {
+        id: `task-${Date.now()}-${Math.random()}`,
+        title: taskTitle,
+        description: '',
+        createdAt: new Date().toISOString(),
+        priority: null,
+        labels: [],
+        hierarchyType: 'task',
+        relationships: [],
+        startDate: null,
+        dueDate: null
+      };
 
-    handleUpdateProject(updatedProject);
-    return newTask;
+      const newProjects = [...prevState.projects];
+      const updatedProject = { ...project };
+      const updatedColumns = [...updatedProject.columns];
+      
+      updatedColumns[columnIndex] = {
+        ...updatedColumns[columnIndex],
+        tasks: [...updatedColumns[columnIndex].tasks, newTask]
+      };
+
+      updatedProject.columns = updatedColumns;
+      newProjects[projectIndex] = updatedProject;
+
+      return {
+        ...prevState,
+        projects: newProjects
+      };
+    });
   };
 
   const handleUpdateProject = (updatedProject) => {
-    setProjects(projects.map(p => 
-      p.id === updatedProject.id ? updatedProject : p
-    ));
+    setState(prevState => ({
+      ...prevState,
+      projects: prevState.projects.map(p => p.id === updatedProject.id ? updatedProject : p)
+    }));
   };
 
   const handleDeleteProject = (projectId) => {
-    setProjects(projects.filter(p => p.id !== projectId));
+    setState(prevState => ({
+      ...prevState,
+      projects: prevState.projects.filter(p => p.id !== projectId)
+    }));
   };
 
   const getAllTasks = () => {
-    return projects.flatMap(project => 
+    return state.projects.flatMap(project => 
       project.columns.flatMap(column => 
         column.tasks.map(task => ({
           ...task,
-          id: task.id || `task-${Date.now()}-${Math.random()}`,
-          title: task.title || '',
-          description: task.description || '',
           projectId: project.id,
           projectTitle: project.title,
           projectColor: project.color,
           mainStatus: column.title,
-          statusColor: column.color || {
-            light: 'bg-surface-100',
-            text: 'text-surface-600',
-            dark: 'dark:bg-dark-hover'
-          },
-          createdAt: task.createdAt || new Date().toISOString(),
-          priority: task.priority || null,
-          labels: task.labels || [],
-          hierarchyType: task.hierarchyType || 'task',
-          relationships: task.relationships || [],
-          startDate: task.startDate || null,
-          dueDate: task.dueDate || null
+          statusColor: column.color
         }))
       )
     );
   };
 
-  const filteredProjects = projects.filter(project =>
+  const filteredProjects = state.projects.filter(project =>
     project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     project.columns.some(column =>
       column.tasks.some(task =>
         task.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         task.labels?.some(label =>
           label.text.toLowerCase().includes(searchQuery.toLowerCase())
-        ) ||
-        task.tags?.some(tag =>
-          tag.toLowerCase().includes(searchQuery.toLowerCase())
         )
       )
     )
@@ -214,42 +242,52 @@ const AuraBoard = () => {
           onUpdateProject={handleUpdateProject}
           onDeleteProject={handleDeleteProject}
           onMoveUp={index > 0 ? () => moveProjectUp(index) : null}
-          onMoveDown={index < projects.length - 1 ? () => moveProjectDown(index) : null}
+          onMoveDown={index < state.projects.length - 1 ? () => moveProjectDown(index) : null}
+          onCreateTask={handleCreateTask}
         />
       ))}
     </div>
   );
 
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-lg text-surface-600 dark:text-dark-text">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen overflow-hidden">
       <SideMenu
-        view={currentView}
+        view={state.currentView}
         onViewChange={setCurrentView}
-        isCollapsed={isMenuCollapsed}
-        onToggleCollapse={() => setIsMenuCollapsed(!isMenuCollapsed)}
+        isCollapsed={state.menuCollapsed}
+        onToggleCollapse={() => setIsMenuCollapsed(!state.menuCollapsed)}
         isMobile={isMobile}
       />
       
       <main 
         className="flex-1 overflow-x-hidden overflow-y-auto"
         style={{ 
-          marginLeft: isMobile ? 0 : (isMenuCollapsed ? '72px' : '220px'),
-          width: isMobile ? '100%' : `calc(100% - ${isMenuCollapsed ? '72px' : '220px'})`,
+          marginLeft: isMobile ? 0 : (state.menuCollapsed ? '72px' : '220px'),
+          width: isMobile ? '100%' : `calc(100% - ${state.menuCollapsed ? '72px' : '220px'})`,
         }}
       >
         <div className="p-3 md:p-6">
           <div className="mb-4 md:mb-8">
             <div className="flex justify-between items-center mb-4">
               <div className="text-xl md:text-2xl font-bold text-surface-800 dark:text-dark-text">
-                {currentView === 'board' && 'Board View'}
-                {currentView === 'list' && 'List View'}
-                {currentView === 'canvas' && 'Canvas View'}
-                {currentView === 'calendar' && 'Calendar View'}
-                {currentView === 'starred' && 'Starred Items'}
-                {currentView === 'recent' && 'Recent Items'}
-                {currentView === 'tags' && 'Tags View'}
+                {state.currentView === 'board' && 'Board View'}
+                {state.currentView === 'list' && 'List View'}
+                {state.currentView === 'canvas' && 'Canvas View'}
+                {state.currentView === 'calendar' && 'Calendar View'}
+                {state.currentView === 'notes' && 'Notes'}
+                {state.currentView === 'starred' && 'Starred Items'}
+                {state.currentView === 'recent' && 'Recent Items'}
+                {state.currentView === 'tags' && 'Tags View'}
               </div>
-              {currentView !== 'canvas' && (
+              {state.currentView !== 'canvas' && state.currentView !== 'notes' && (
                 <button
                   onClick={() => setIsAddingProject(true)}
                   className="p-2 hover:bg-surface-100 dark:hover:bg-dark-hover active:bg-surface-200 
@@ -262,7 +300,7 @@ const AuraBoard = () => {
               )}
             </div>
 
-            {currentView !== 'canvas' && (
+            {state.currentView !== 'canvas' && state.currentView !== 'notes' && (
               <div className="relative">
                 <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 
                   text-surface-400 dark:text-dark-text/60" />
@@ -282,7 +320,7 @@ const AuraBoard = () => {
             )}
           </div>
 
-          {isAddingProject && currentView !== 'canvas' && (
+          {isAddingProject && state.currentView !== 'canvas' && state.currentView !== 'notes' && (
             <div className="mb-4 md:mb-8 bg-white dark:bg-dark-card p-4 md:p-6 rounded-xl 
               shadow-aura border border-surface-200 dark:border-dark-border transition-colors duration-200">
               <form onSubmit={(e) => {
@@ -335,11 +373,11 @@ const AuraBoard = () => {
             </div>
           )}
 
-          {currentView === 'board' && renderBoardView()}
+          {state.currentView === 'board' && renderBoardView()}
 
-          {currentView === 'list' && (
+          {state.currentView === 'list' && (
             <ListView 
-              projects={projects}
+              projects={state.projects}
               onUpdateProject={handleUpdateProject}
               onDeleteProject={handleDeleteProject}
               onMoveUp={moveProjectUp}
@@ -350,28 +388,32 @@ const AuraBoard = () => {
             />
           )}
 
-          {currentView === 'canvas' && (
+          {state.currentView === 'canvas' && (
             <div className="bg-white dark:bg-dark-card rounded-xl shadow-aura border 
               border-surface-200 dark:border-dark-border transition-colors duration-200">
               <CanvasView 
-                projectId={selectedProjectId || (projects[0] && projects[0].id)} 
+                projectId={selectedProjectId || (state.projects[0] && state.projects[0].id)} 
                 onProjectSelect={setSelectedProjectId}
-                projects={projects}
+                projects={state.projects}
                 onUpdateProject={handleUpdateProject}
               />
             </div>
           )}
 
-          {currentView === 'calendar' && (
-            <div className="bg-white dark:bg-dark-card rounded-xl shadow-aura border 
-              border-surface-200 dark:border-dark-border p-4 md:p-6 transition-colors duration-200">
-              <p className="text-sm md:text-base text-surface-500 dark:text-dark-text/80">
-                Calendar view coming soon...
-              </p>
-            </div>
+          {state.currentView === 'calendar' && (
+            <CalendarView 
+              projects={state.projects}
+              onUpdateProject={handleUpdateProject}
+              onDeleteProject={handleDeleteProject}
+              allTasks={getAllTasks()}
+            />
           )}
 
-          {currentView === 'starred' && (
+          {state.currentView === 'notes' && (
+            <NotesView />
+          )}
+
+          {state.currentView === 'starred' && (
             <div className="bg-white dark:bg-dark-card rounded-xl shadow-aura border 
               border-surface-200 dark:border-dark-border p-4 md:p-6 transition-colors duration-200">
               <p className="text-sm md:text-base text-surface-500 dark:text-dark-text/80">
@@ -380,7 +422,7 @@ const AuraBoard = () => {
             </div>
           )}
 
-          {currentView === 'recent' && (
+          {state.currentView === 'recent' && (
             <div className="bg-white dark:bg-dark-card rounded-xl shadow-aura border 
               border-surface-200 dark:border-dark-border p-4 md:p-6 transition-colors duration-200">
               <p className="text-sm md:text-base text-surface-500 dark:text-dark-text/80">
@@ -389,7 +431,7 @@ const AuraBoard = () => {
             </div>
           )}
 
-          {currentView === 'tags' && (
+          {state.currentView === 'tags' && (
             <div className="bg-white dark:bg-dark-card rounded-xl shadow-aura border 
               border-surface-200 dark:border-dark-border p-4 md:p-6 transition-colors duration-200">
               <p className="text-sm md:text-base text-surface-500 dark:text-dark-text/80">

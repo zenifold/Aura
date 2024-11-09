@@ -1,6 +1,5 @@
 import React from 'react';
 import ProjectHeader from './ProjectHeader';
-import { useProjectActions } from '../hooks/useProjectActions';
 import TaskListItem from './TaskListItem';
 import { useTheme } from '../hooks/useTheme';
 
@@ -18,12 +17,11 @@ const SortableProject = ({
   onMoveDown,
   isFirst,
   isLast,
-  children
+  children,
+  onAddTask
 }) => {
   const [isCollapsed, setIsCollapsed] = React.useState(project.isCollapsed || false);
   const { theme } = useTheme();
-
-  const { handleAddTask } = useProjectActions(project, onUpdateProject);
 
   const handleUpdateTask = (taskId, updatedTask) => {
     const updatedColumns = project.columns.map(column => ({
@@ -62,7 +60,7 @@ const SortableProject = ({
         }}
         onUpdateProject={onUpdateProject}
         onDeleteProject={onDeleteProject}
-        onAddTask={() => handleAddTaskClick(project.id)}
+        onAddTask={onAddTask}
         onMoveUp={onMoveUp}
         onMoveDown={onMoveDown}
         isFirst={isFirst}
@@ -94,7 +92,7 @@ const SortableProject = ({
                   <button
                     onClick={() => {
                       if (newTaskTitle.trim()) {
-                        handleAddTask(project.columns[0].id, newTaskTitle);
+                        onAddTask(project.columns[0].id, newTaskTitle);
                         handleCancelAddTask();
                       }
                     }}

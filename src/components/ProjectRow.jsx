@@ -5,7 +5,6 @@ import { Plus } from 'lucide-react';
 import DroppableColumn from './DroppableColumn';
 import AddColumnForm from './AddColumnForm';
 import SortableProject from './SortableProject';
-import { useProjectActions } from '../hooks/useProjectActions';
 import { useTheme } from '../hooks/useTheme';
 
 const ProjectRow = ({ 
@@ -17,18 +16,14 @@ const ProjectRow = ({
   onMoveUp,
   onMoveDown,
   isFirst,
-  isLast
+  isLast,
+  onCreateTask
 }) => {
   const [isAddingColumn, setIsAddingColumn] = useState(false);
   const [activeTask, setActiveTask] = useState(null);
   const [addingTaskForProject, setAddingTaskForProject] = useState(null);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const { theme } = useTheme();
-
-  const {
-    handleAddTask,
-    handleUpdateTask
-  } = useProjectActions(project, onUpdateProject);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -158,6 +153,16 @@ const ProjectRow = ({
     setNewTaskTitle('');
   };
 
+  const handleAddTask = (columnId, taskTitle) => {
+    onCreateTask(project.id, columnId, taskTitle);
+  };
+
+  const handleHeaderAddTask = () => {
+    if (project.columns.length > 0) {
+      onCreateTask(project.id, project.columns[0].id, 'New Task');
+    }
+  };
+
   // Get all project tasks for relationships
   const allProjectTasks = getAllProjectTasks();
 
@@ -176,6 +181,7 @@ const ProjectRow = ({
         onMoveDown={onMoveDown}
         isFirst={isFirst}
         isLast={isLast}
+        onAddTask={handleHeaderAddTask}
       >
         <DndContext 
           sensors={sensors}
@@ -189,11 +195,22 @@ const ProjectRow = ({
                   column={column}
                   tasks={column.tasks}
                   onAddTask={handleAddTask}
-                  onUpdateTask={handleUpdateTask}
+                  onUpdateTask={(updatedTask) => {
+                    const updatedColumns = project.columns.map(col => ({
+                      ...col,
+                      tasks: col.tasks.map(task =>
+                        task.id === updatedTask.id ? updatedTask : task
+                      )
+                    }));
+                    onUpdateProject({
+                      ...project,
+                      columns: updatedColumns
+                    });
+                  }}
                   onUpdateColumn={onUpdateColumn}
                   projectLabels={project.labels || []}
                   onCreateLabel={onCreateLabel}
-                  allProjectTasks={allProjectTasks} // Pass all project tasks for relationships
+                  allProjectTasks={allProjectTasks}
                 />
               </div>
             ))}

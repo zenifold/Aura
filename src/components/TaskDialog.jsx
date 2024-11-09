@@ -3,7 +3,6 @@ import { X } from 'lucide-react';
 import TaskMetadataForm from './TaskMetadataForm';
 import TaskPrioritySelect from './TaskPrioritySelect';
 import TaskLabelSelect from './TaskLabelSelect';
-import TaskHierarchySelect from './TaskHierarchySelect';
 import TaskRelationshipSelect from './TaskRelationshipSelect';
 import { useTaskForm } from '../hooks/useTaskForm';
 import { useDialog } from '../hooks/useDialog';
@@ -138,12 +137,9 @@ const TaskDialog = ({
                 setDueDate={setDueDate}
                 status={status}
                 setStatus={setStatus}
+                hierarchyType={hierarchyType}
+                setHierarchyType={setHierarchyType}
                 availableColumns={availableColumns}
-              />
-
-              <TaskHierarchySelect
-                selectedType={hierarchyType}
-                onTypeSelect={setHierarchyType}
               />
 
               <TaskPrioritySelect

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import TaskDialog from './TaskDialog';
+import { defaultColumns } from './ListViewColumns';
 
 const HIERARCHY_ICONS = {
   epic: { 
@@ -116,12 +117,17 @@ const TaskListItem = ({
     return relatedTask?.title || 'Unknown Task';
   };
 
+  const getColumnWidth = (columnId) => {
+    const column = defaultColumns.find(col => col.id === columnId);
+    return column?.width || 'auto';
+  };
+
   return (
     <>
-      <tr className="group hover:bg-surface-50/50 dark:hover:bg-dark-hover transition-colors">
+      <div className="table-row group hover:bg-surface-50/50 dark:hover:bg-dark-hover transition-colors">
         {/* Title Column - Always visible */}
-        <td className="p-2 sm:p-3">
-          <div className="flex items-center gap-2 min-w-[200px]">
+        <div className="table-cell p-2 sm:p-3" style={{ width: getColumnWidth('title') }}>
+          <div className="flex items-center gap-2">
             <div className={`p-1 rounded-md ${hierarchyColor.bg} border ${hierarchyColor.border} 
               shadow-sm transition-transform duration-200 shrink-0`}
               title={`${hierarchyType.charAt(0).toUpperCase() + hierarchyType.slice(1)}`}
@@ -144,23 +150,23 @@ const TaskListItem = ({
                 group-hover:text-aura-500 dark:group-hover:text-aura-400" />
             </button>
           </div>
-        </td>
+        </div>
 
         {/* Status Column */}
         {activeColumns.includes('status') && (
-          <td className="p-2 sm:p-3 whitespace-nowrap">
+          <div className="table-cell p-2 sm:p-3 whitespace-nowrap" style={{ width: getColumnWidth('status') }}>
             <span className={`px-2.5 py-1 rounded-full text-sm font-medium inline-block
               ${task.statusColor?.light || 'bg-surface-100 dark:bg-dark-hover'} 
               ${task.statusColor?.text || 'text-surface-600 dark:text-dark-text'}
               dark:bg-opacity-30 shadow-sm dark:shadow-none`}>
               {task.mainStatus}
             </span>
-          </td>
+          </div>
         )}
 
         {/* Priority Column */}
         {activeColumns.includes('priority') && (
-          <td className="p-2 sm:p-3 whitespace-nowrap">
+          <div className="table-cell p-2 sm:p-3 whitespace-nowrap" style={{ width: getColumnWidth('priority') }}>
             {task.priority && (
               <span className={`text-xs px-2.5 py-1 rounded-full font-medium inline-block
                 ${task.priority.color.light} dark:bg-opacity-30 ${task.priority.color.text}
@@ -168,25 +174,25 @@ const TaskListItem = ({
                 {task.priority.label}
               </span>
             )}
-          </td>
+          </div>
         )}
 
         {/* Due Date Column */}
         {activeColumns.includes('dueDate') && (
-          <td className="p-2 sm:p-3 whitespace-nowrap">
+          <div className="table-cell p-2 sm:p-3 whitespace-nowrap" style={{ width: getColumnWidth('dueDate') }}>
             {task.dueDate && (
               <span className="flex items-center gap-1.5 text-sm text-surface-500 dark:text-dark-text/60">
                 <Calendar size={14} className="text-surface-400 dark:text-dark-text/50 shrink-0" />
                 <span>{new Date(task.dueDate).toLocaleDateString()}</span>
               </span>
             )}
-          </td>
+          </div>
         )}
 
         {/* Relationships Column */}
         {activeColumns.includes('relationships') && (
-          <td className="p-2 sm:p-3">
-            <div className="flex flex-wrap gap-1.5 min-w-[200px]">
+          <div className="table-cell p-2 sm:p-3" style={{ width: getColumnWidth('relationships') }}>
+            <div className="flex flex-wrap gap-1.5">
               {task.relationships?.map((rel) => {
                 const relType = RELATIONSHIP_TYPES[rel.type];
                 const RelIcon = relType?.icon || Link;
@@ -207,13 +213,13 @@ const TaskListItem = ({
                 );
               })}
             </div>
-          </td>
+          </div>
         )}
 
         {/* Labels Column */}
         {activeColumns.includes('labels') && (
-          <td className="p-2 sm:p-3">
-            <div className="flex flex-wrap gap-1.5 min-w-[200px]">
+          <div className="table-cell p-2 sm:p-3" style={{ width: getColumnWidth('labels') }}>
+            <div className="flex flex-wrap gap-1.5">
               {task.labels?.map(label => (
                 <span
                   key={label.id}
@@ -238,21 +244,21 @@ const TaskListItem = ({
                 </span>
               ))}
             </div>
-          </td>
+          </div>
         )}
 
         {/* Project Column */}
         {activeColumns.includes('project') && showProject && (
-          <td className="p-2 sm:p-3 whitespace-nowrap">
+          <div className="table-cell p-2 sm:p-3 whitespace-nowrap" style={{ width: getColumnWidth('project') }}>
             <span className="flex items-center gap-1.5 text-sm">
               <Folder size={14} className="text-surface-400 dark:text-dark-text/50 shrink-0" />
               <span className={`${task.projectColor?.text || 'text-surface-600 dark:text-dark-text'} truncate`}>
                 {task.projectTitle}
               </span>
             </span>
-          </td>
+          </div>
         )}
-      </tr>
+      </div>
 
       {/* Task Dialog */}
       <TaskDialog

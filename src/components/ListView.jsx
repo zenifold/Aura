@@ -120,32 +120,14 @@ const ListView = ({
             </button>
           </div>
         </div>
-
-        {isTaskDialogOpen && (
-          <TaskDialog
-            task={{}}
-            isOpen={isTaskDialogOpen}
-            onClose={() => {
-              setIsTaskDialogOpen(false);
-              setSelectedProjectId(null);
-            }}
-            onUpdate={(taskData) => {
-              if (selectedProjectId) {
-                onCreateTask(selectedProjectId, taskData);
-              }
-              setIsTaskDialogOpen(false);
-              setSelectedProjectId(null);
-            }}
-            availableLabels={allLabels}
-            availableTasks={allTasks}
-            availableColumns={
-              projects.find(p => p.id === selectedProjectId)?.columns || []
-            }
-          />
-        )}
       </div>
     );
   }
+
+  const getColumnWidth = (columnId) => {
+    const column = defaultColumns.find(col => col.id === columnId);
+    return column?.width || 'auto';
+  };
 
   return (
     <div className="space-y-6 px-2 sm:px-6 py-4">
@@ -208,57 +190,102 @@ const ListView = ({
 
       {/* Task Groups */}
       <div className="space-y-6">
-        {Object.entries(groupedTasks).map(([group, tasks]) => (
-          <div key={group} className="bg-white dark:bg-dark-card rounded-xl shadow-aura dark:shadow-none 
-            border border-surface-200 dark:border-dark-border overflow-hidden">
-            <div className="p-4 border-b border-surface-200 dark:border-dark-border">
-              <div className="flex items-center gap-3">
-                <div className="h-2 w-2 rounded-full bg-aura-500" />
-                <h2 className="text-lg font-semibold text-surface-800 dark:text-dark-text">{group}</h2>
-                <span className="text-sm text-surface-500 dark:text-dark-text/60">
-                  {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
-                </span>
+        {Object.entries(groupedTasks).map(([group, tasks]) => {
+          const projectId = tasks[0]?.projectId;
+          return (
+            <div key={group} className="bg-white dark:bg-dark-card rounded-xl shadow-aura dark:shadow-none 
+              border border-surface-200 dark:border-dark-border overflow-hidden">
+              <div className="p-4 border-b border-surface-200 dark:border-dark-border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-2 w-2 rounded-full bg-aura-500" />
+                    <h2 className="text-lg font-semibold text-surface-800 dark:text-dark-text">{group}</h2>
+                    <span className="text-sm text-surface-500 dark:text-dark-text/60">
+                      {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
+                    </span>
+                  </div>
+                  {groupBy === 'project' && projectId && (
+                    <button
+                      onClick={() => {
+                        setSelectedProjectId(projectId);
+                        setIsTaskDialogOpen(true);
+                      }}
+                      className="p-1.5 rounded-lg hover:bg-surface-100 dark:hover:bg-dark-hover
+                        text-surface-600 dark:text-dark-text/80 hover:text-aura-600 dark:hover:text-aura-400
+                        transition-colors duration-200"
+                      title="Add task"
+                    >
+                      <Plus size={16} />
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px]">
-                <thead>
-                  <tr className="border-b border-surface-200 dark:border-dark-border bg-surface-50 dark:bg-dark-hover">
-                    {orderedActiveColumns.map(columnId => {
-                      const column = defaultColumns.find(col => col.id === columnId);
-                      if (!column) return null;
+              <div className="overflow-x-auto">
+                <div className="min-w-full table">
+                  <div className="table-header-group">
+                    <div className="table-row border-b border-surface-200 dark:border-dark-border bg-surface-50 dark:bg-dark-hover">
+                      {orderedActiveColumns.map(columnId => {
+                        const column = defaultColumns.find(col => col.id === columnId);
+                        if (!column) return null;
+                        return (
+                          <div key={column.id} 
+                            className="table-cell text-left p-3 text-sm font-medium text-surface-600 dark:text-dark-text/80 whitespace-nowrap"
+                            style={{ width: getColumnWidth(column.id) }}
+                          >
+                            {column.label}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="table-row-group divide-y divide-surface-100 dark:divide-dark-border">
+                    {tasks.map(task => {
+                      const project = projects.find(p => p.id === task.projectId);
+                      
                       return (
-                        <th key={column.id} className="text-left p-3 text-sm font-medium text-surface-600 dark:text-dark-text/80 whitespace-nowrap">
-                          {column.label}
-                        </th>
+                        <TaskListItem
+                          key={task.id}
+                          task={task}
+                          onUpdateTask={(updatedTask) => handleUpdateTask(task.projectId, task.id, updatedTask)}
+                          projectColor={project?.color}
+                          showProject={groupBy !== 'project'}
+                          availableTasks={allTasks}
+                          availableLabels={allLabels}
+                          activeColumns={orderedActiveColumns}
+                        />
                       );
                     })}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-surface-100 dark:divide-dark-border">
-                  {tasks.map(task => {
-                    const project = projects.find(p => p.id === task.projectId);
-                    
-                    return (
-                      <TaskListItem
-                        key={task.id}
-                        task={task}
-                        onUpdateTask={(updatedTask) => handleUpdateTask(task.projectId, task.id, updatedTask)}
-                        projectColor={project?.color}
-                        showProject={groupBy !== 'project'}
-                        availableTasks={allTasks}
-                        availableLabels={allLabels}
-                        activeColumns={orderedActiveColumns}
-                      />
-                    );
-                  })}
-                </tbody>
-              </table>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      {isTaskDialogOpen && (
+        <TaskDialog
+          task={{}}
+          isOpen={isTaskDialogOpen}
+          onClose={() => {
+            setIsTaskDialogOpen(false);
+            setSelectedProjectId(null);
+          }}
+          onUpdate={(taskData) => {
+            if (selectedProjectId) {
+              onCreateTask(selectedProjectId, taskData);
+            }
+            setIsTaskDialogOpen(false);
+            setSelectedProjectId(null);
+          }}
+          availableLabels={allLabels}
+          availableTasks={allTasks}
+          availableColumns={
+            projects.find(p => p.id === selectedProjectId)?.columns || []
+          }
+        />
+      )}
     </div>
   );
 };
