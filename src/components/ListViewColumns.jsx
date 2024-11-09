@@ -10,6 +10,7 @@ const defaultColumns = [
   { id: 'status', label: 'Status' },
   { id: 'priority', label: 'Priority' },
   { id: 'dueDate', label: 'Due Date' },
+  { id: 'relationships', label: 'Relationships' },
   { id: 'labels', label: 'Labels' },
   { id: 'tags', label: 'Tags' },
   { id: 'project', label: 'Project' }

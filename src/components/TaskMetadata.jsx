@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Tag, Plus, X, ChevronDown } from 'lucide-react';
 import { colors } from './ColorPicker';
+import TaskRelationshipSelect from './TaskRelationshipSelect';
 
 const defaultPriorities = [
   { id: 'urgent', label: 'Urgent', color: { light: 'bg-red-50', text: 'text-status-error', ring: 'ring-status-error' } },
@@ -13,6 +14,7 @@ const TaskMetadata = ({
   task, 
   onUpdate,
   availableLabels = [],
+  availableTasks = [],
   onCreateLabel,
   className = "" 
 }) => {
@@ -66,6 +68,23 @@ const TaskMetadata = ({
     }
   };
 
+  const handleAddRelationship = (relationship) => {
+    const currentRelationships = task.relationships || [];
+    onUpdate({
+      ...task,
+      relationships: [...currentRelationships, relationship]
+    });
+  };
+
+  const handleRemoveRelationship = (relationshipToRemove) => {
+    const updatedRelationships = (task.relationships || [])
+      .filter(rel => !(rel.type === relationshipToRemove.type && rel.taskId === relationshipToRemove.taskId));
+    onUpdate({
+      ...task,
+      relationships: updatedRelationships
+    });
+  };
+
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Priority Picker */}
@@ -104,6 +123,15 @@ const TaskMetadata = ({
           </div>
         )}
       </div>
+
+      {/* Task Relationships */}
+      <TaskRelationshipSelect
+        currentTaskId={task.id}
+        relationships={task.relationships || []}
+        availableTasks={availableTasks}
+        onAddRelationship={handleAddRelationship}
+        onRemoveRelationship={handleRemoveRelationship}
+      />
 
       {/* Labels */}
       <div>

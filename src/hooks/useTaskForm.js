@@ -1,40 +1,46 @@
 import { useState, useEffect } from 'react';
 
 export const useTaskForm = (task, onUpdate) => {
-  const [title, setTitle] = useState(task.title);
-  const [description, setDescription] = useState(task.description || '');
-  const [startDate, setStartDate] = useState(task.startDate || null);
-  const [dueDate, setDueDate] = useState(task.dueDate || null);
-  const [priority, setPriority] = useState(task.priority || null);
-  const [selectedLabels, setSelectedLabels] = useState(task.labels || []);
+  const [title, setTitle] = useState(task?.title || '');
+  const [description, setDescription] = useState(task?.description || '');
+  const [startDate, setStartDate] = useState(task?.startDate || null);
+  const [dueDate, setDueDate] = useState(task?.dueDate || null);
+  const [priority, setPriority] = useState(task?.priority || null);
+  const [selectedLabels, setSelectedLabels] = useState(task?.labels || []);
   const [isAddingLabel, setIsAddingLabel] = useState(false);
   const [newLabelText, setNewLabelText] = useState('');
-  const [hierarchyType, setHierarchyType] = useState(task.hierarchyType || 'task');
-  const [relationships, setRelationships] = useState(task.relationships || []);
+  const [hierarchyType, setHierarchyType] = useState(task?.hierarchyType || 'task');
+  const [relationships, setRelationships] = useState(task?.relationships || []);
+  const [status, setStatus] = useState(task?.status || task?.mainStatus || 'To Do');
 
   useEffect(() => {
-    setTitle(task.title);
-    setDescription(task.description || '');
-    setStartDate(task.startDate || null);
-    setDueDate(task.dueDate || null);
-    setPriority(task.priority || null);
-    setSelectedLabels(task.labels || []);
-    setHierarchyType(task.hierarchyType || 'task');
-    setRelationships(task.relationships || []);
+    if (task) {
+      setTitle(task.title || '');
+      setDescription(task.description || '');
+      setStartDate(task.startDate || null);
+      setDueDate(task.dueDate || null);
+      setPriority(task.priority || null);
+      setSelectedLabels(task.labels || []);
+      setHierarchyType(task.hierarchyType || 'task');
+      setRelationships(task.relationships || []);
+      setStatus(task.status || task.mainStatus || 'To Do');
+    }
   }, [task]);
 
   const handleSubmit = () => {
-    if (title.trim()) {
+    const trimmedTitle = (title || '').trim();
+    if (trimmedTitle) {
       onUpdate({
         ...task,
-        title: title.trim(),
-        description: description.trim(),
+        title: trimmedTitle,
+        description: (description || '').trim(),
         startDate,
         dueDate,
         priority,
         labels: selectedLabels,
         hierarchyType,
-        relationships
+        relationships,
+        status
       });
     }
   };
@@ -142,6 +148,8 @@ export const useTaskForm = (task, onUpdate) => {
     hierarchyType,
     setHierarchyType,
     relationships,
+    status,
+    setStatus,
     handleSubmit,
     handleLabelToggle,
     handleAddLabel,

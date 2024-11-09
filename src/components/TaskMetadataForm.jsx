@@ -13,7 +13,10 @@ const TaskMetadataForm = ({
   startDate,
   setStartDate,
   dueDate,
-  setDueDate
+  setDueDate,
+  status,
+  setStatus,
+  availableColumns = []
 }) => {
   const titleInputRef = useAutoResize(title);
   const { theme } = useTheme();
@@ -77,6 +80,31 @@ const TaskMetadataForm = ({
             text-surface-700 dark:text-dark-text placeholder-surface-400 dark:placeholder-dark-text/60
             bg-white dark:bg-dark-hover transition-all duration-200"
         />
+      </div>
+
+      {/* Status */}
+      <div>
+        <label className="block text-sm font-medium text-surface-600 dark:text-dark-text/80 mb-1.5">
+          Status
+        </label>
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="w-full px-3 py-2 border border-surface-200 dark:border-dark-border rounded-lg 
+            focus:outline-none focus:ring-2 focus:ring-aura-200 dark:focus:ring-aura-500/30 
+            focus:border-aura-500 dark:focus:border-aura-500 text-surface-700 dark:text-dark-text 
+            bg-white dark:bg-dark-hover transition-all duration-200"
+        >
+          {availableColumns.map(column => (
+            <option 
+              key={column.id || column.title} 
+              value={column.title}
+              className="py-1"
+            >
+              {column.title}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Dates */}

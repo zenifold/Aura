@@ -42,6 +42,17 @@ const ProjectRow = ({
     })
   );
 
+  // Get all tasks from all columns in the project
+  const getAllProjectTasks = () => {
+    return project.columns.flatMap(column => 
+      column.tasks.map(task => ({
+        ...task,
+        mainStatus: column.title,
+        statusColor: column.color
+      }))
+    );
+  };
+
   const findColumnByTaskId = (taskId) => {
     return project.columns.find(column => 
       column.tasks.some(task => task.id === taskId)
@@ -147,6 +158,9 @@ const ProjectRow = ({
     setNewTaskTitle('');
   };
 
+  // Get all project tasks for relationships
+  const allProjectTasks = getAllProjectTasks();
+
   return (
     <div className="mb-4 md:mb-8 last:mb-0">
       <SortableProject
@@ -179,6 +193,7 @@ const ProjectRow = ({
                   onUpdateColumn={onUpdateColumn}
                   projectLabels={project.labels || []}
                   onCreateLabel={onCreateLabel}
+                  allProjectTasks={allProjectTasks} // Pass all project tasks for relationships
                 />
               </div>
             ))}

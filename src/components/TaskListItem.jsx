@@ -6,7 +6,13 @@ import {
   ExternalLink,
   LayoutGrid,
   BookOpen,
-  CheckSquare
+  CheckSquare,
+  Link,
+  ArrowRight,
+  ArrowLeft,
+  GitMerge,
+  GitBranch,
+  Copy
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import TaskDialog from './TaskDialog';
@@ -38,6 +44,57 @@ const HIERARCHY_ICONS = {
   }
 };
 
+const RELATIONSHIP_TYPES = {
+  'blocks': {
+    icon: ArrowRight,
+    color: {
+      bg: 'bg-red-50 dark:bg-red-500/10',
+      text: 'text-red-600 dark:text-red-400',
+      border: 'border-red-200 dark:border-red-500/20'
+    }
+  },
+  'blocked-by': {
+    icon: ArrowLeft,
+    color: {
+      bg: 'bg-orange-50 dark:bg-orange-500/10',
+      text: 'text-orange-600 dark:text-orange-400',
+      border: 'border-orange-200 dark:border-orange-500/20'
+    }
+  },
+  'relates-to': {
+    icon: Link,
+    color: {
+      bg: 'bg-blue-50 dark:bg-blue-500/10',
+      text: 'text-blue-600 dark:text-blue-400',
+      border: 'border-blue-200 dark:border-blue-500/20'
+    }
+  },
+  'duplicates': {
+    icon: Copy,
+    color: {
+      bg: 'bg-purple-50 dark:bg-purple-500/10',
+      text: 'text-purple-600 dark:text-purple-400',
+      border: 'border-purple-200 dark:border-purple-500/20'
+    }
+  },
+  'parent-of': {
+    icon: GitBranch,
+    color: {
+      bg: 'bg-green-50 dark:bg-green-500/10',
+      text: 'text-green-600 dark:text-green-400',
+      border: 'border-green-200 dark:border-green-500/20'
+    }
+  },
+  'child-of': {
+    icon: GitMerge,
+    color: {
+      bg: 'bg-teal-50 dark:bg-teal-500/10',
+      text: 'text-teal-600 dark:text-teal-400',
+      border: 'border-teal-200 dark:border-teal-500/20'
+    }
+  }
+};
+
 const TaskListItem = ({ 
   task, 
   onUpdateTask, 
@@ -53,6 +110,11 @@ const TaskListItem = ({
   const hierarchyType = task.hierarchyType || 'task';
   const HierarchyIcon = HIERARCHY_ICONS[hierarchyType]?.icon || CheckSquare;
   const hierarchyColor = HIERARCHY_ICONS[hierarchyType]?.color;
+
+  const getRelatedTaskTitle = (taskId) => {
+    const relatedTask = availableTasks.find(t => t.id === taskId);
+    return relatedTask?.title || 'Unknown Task';
+  };
 
   return (
     <>
@@ -118,6 +180,33 @@ const TaskListItem = ({
                 <span>{new Date(task.dueDate).toLocaleDateString()}</span>
               </span>
             )}
+          </td>
+        )}
+
+        {/* Relationships Column */}
+        {activeColumns.includes('relationships') && (
+          <td className="p-2 sm:p-3">
+            <div className="flex flex-wrap gap-1.5 min-w-[200px]">
+              {task.relationships?.map((rel) => {
+                const relType = RELATIONSHIP_TYPES[rel.type];
+                const RelIcon = relType?.icon || Link;
+                return (
+                  <span
+                    key={`${rel.type}-${rel.taskId}`}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium inline-flex items-center gap-1.5
+                      ${relType?.color.bg} ${relType?.color.text} ${relType?.color.border}
+                      shadow-sm dark:shadow-none transform transition-transform duration-200
+                      hover:scale-105 whitespace-nowrap border`}
+                  >
+                    <RelIcon size={12} className="shrink-0" />
+                    <span>{rel.type}:</span>
+                    <span className="truncate max-w-[120px]">
+                      {getRelatedTaskTitle(rel.taskId)}
+                    </span>
+                  </span>
+                );
+              })}
+            </div>
           </td>
         )}
 

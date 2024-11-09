@@ -11,7 +11,8 @@ import {
   Settings,
   Sparkles,
   Palette,
-  ChevronLeft
+  ChevronLeft,
+  Pencil
 } from 'lucide-react';
 import ThemePicker from './ThemePicker';
 import { useTheme } from '../hooks/useTheme.jsx';
@@ -21,7 +22,7 @@ const MAX_WIDTH = 400;
 const DEFAULT_WIDTH = 220;
 const COLLAPSED_WIDTH = 72;
 const HEADER_HEIGHT = 57;
-const TOP_OFFSET = 77; // 20 more than header height for spacing
+const TOP_OFFSET = 77;
 
 const SideMenu = ({ 
   view, 
@@ -55,6 +56,7 @@ const SideMenu = ({
       items: [
         { id: 'board', icon: (collapsed) => <Columns size={getIconSize(collapsed)} />, label: 'Board View' },
         { id: 'list', icon: (collapsed) => <ListTodo size={getIconSize(collapsed)} />, label: 'List View' },
+        { id: 'canvas', icon: (collapsed) => <Pencil size={getIconSize(collapsed)} />, label: 'Canvas View' },
         { id: 'calendar', icon: (collapsed) => <Calendar size={getIconSize(collapsed)} />, label: 'Calendar' },
       ]
     },
@@ -99,8 +101,6 @@ const SideMenu = ({
     const currentTouch = e.touches[0].clientX;
     const diff = touchStart - currentTouch;
 
-    // If swiping left (diff > 0) and menu is open, or
-    // swiping right (diff < 0) and menu is closed
     if ((diff > 50 && !isCollapsed) || (diff < -50 && isCollapsed)) {
       setTouchStart(null);
       onToggleCollapse();
@@ -125,7 +125,6 @@ const SideMenu = ({
 
   return (
     <>
-      {/* Mobile Overlay */}
       {isMobile && !isCollapsed && (
         <div 
           className="fixed inset-0 bg-black/30 z-40"
@@ -133,7 +132,6 @@ const SideMenu = ({
         />
       )}
 
-      {/* Menu */}
       <aside 
         style={{ 
           width: !isMobile && isCollapsed ? COLLAPSED_WIDTH : (isMobile ? '280px' : width),
@@ -157,7 +155,6 @@ const SideMenu = ({
         <nav className="h-full flex flex-col">
           <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
             <div className="p-2">
-              {/* Desktop Toggle */}
               {!isMobile && (
                 <button
                   onClick={onToggleCollapse}
@@ -213,7 +210,6 @@ const SideMenu = ({
                 </div>
               ))}
 
-              {/* Settings Section */}
               {(!isCollapsed || isMobile) && (
                 <div className="mb-4">
                   <h3 className="text-sm font-semibold text-surface-500 dark:text-dark-text/70 mb-2 px-2">
@@ -239,7 +235,6 @@ const SideMenu = ({
                     />
                   </button>
 
-                  {/* Settings Panel */}
                   {showSettings && (
                     <div className="mt-2 p-4 bg-white dark:bg-dark-card rounded-lg border border-surface-200 dark:border-dark-border shadow-sm transition-colors duration-200">
                       <div className="mb-4">
@@ -262,7 +257,6 @@ const SideMenu = ({
           </div>
         </nav>
 
-        {/* Resize Handle - Desktop Only */}
         {!isCollapsed && !isMobile && (
           <div
             className="absolute top-0 right-0 w-1 h-full cursor-col-resize group"

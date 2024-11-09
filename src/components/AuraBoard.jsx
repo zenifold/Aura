@@ -3,6 +3,7 @@ import { Plus, Search } from 'lucide-react';
 import ProjectRow from './ProjectRow';
 import SideMenu from './SideMenu';
 import ListView from './ListView';
+import CanvasView from './CanvasView';
 import { loadState, saveState } from '../utils/storage';
 import { colors } from './ColorPicker';
 import { useProjectSort } from '../hooks/useProjectSort';
@@ -56,6 +57,7 @@ const AuraBoard = () => {
     return savedState?.currentView || 'board';
   });
 
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [newProjectTitle, setNewProjectTitle] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -219,41 +221,46 @@ const AuraBoard = () => {
               <div className="text-xl md:text-2xl font-bold text-surface-800 dark:text-dark-text">
                 {currentView === 'board' && 'Board View'}
                 {currentView === 'list' && 'List View'}
+                {currentView === 'canvas' && 'Canvas View'}
                 {currentView === 'calendar' && 'Calendar View'}
                 {currentView === 'starred' && 'Starred Items'}
                 {currentView === 'recent' && 'Recent Items'}
                 {currentView === 'tags' && 'Tags View'}
               </div>
-              <button
-                onClick={() => setIsAddingProject(true)}
-                className="p-2 hover:bg-surface-100 dark:hover:bg-dark-hover active:bg-surface-200 
-                  rounded-lg transition-colors touch-manipulation text-surface-600 dark:text-dark-text 
-                  hover:text-aura-600 dark:hover:text-aura-400"
-                title="Add new project"
-              >
-                <Plus size={24} />
-              </button>
+              {currentView !== 'canvas' && (
+                <button
+                  onClick={() => setIsAddingProject(true)}
+                  className="p-2 hover:bg-surface-100 dark:hover:bg-dark-hover active:bg-surface-200 
+                    rounded-lg transition-colors touch-manipulation text-surface-600 dark:text-dark-text 
+                    hover:text-aura-600 dark:hover:text-aura-400"
+                  title="Add new project"
+                >
+                  <Plus size={24} />
+                </button>
+              )}
             </div>
 
-            <div className="relative">
-              <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 
-                text-surface-400 dark:text-dark-text/60" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search projects and tasks..."
-                className="w-full pl-10 pr-4 py-2.5 text-sm md:text-base border border-surface-200 
-                  dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 
-                  focus:ring-aura-200 dark:focus:ring-aura-500/30 focus:border-aura-500 
-                  dark:focus:border-aura-500 text-surface-700 dark:text-dark-text 
-                  placeholder-surface-400 dark:placeholder-dark-text/60 bg-white dark:bg-dark-card
-                  transition-all duration-200"
-              />
-            </div>
+            {currentView !== 'canvas' && (
+              <div className="relative">
+                <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 
+                  text-surface-400 dark:text-dark-text/60" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search projects and tasks..."
+                  className="w-full pl-10 pr-4 py-2.5 text-sm md:text-base border border-surface-200 
+                    dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 
+                    focus:ring-aura-200 dark:focus:ring-aura-500/30 focus:border-aura-500 
+                    dark:focus:border-aura-500 text-surface-700 dark:text-dark-text 
+                    placeholder-surface-400 dark:placeholder-dark-text/60 bg-white dark:bg-dark-card
+                    transition-all duration-200"
+                />
+              </div>
+            )}
           </div>
 
-          {isAddingProject && (
+          {isAddingProject && currentView !== 'canvas' && (
             <div className="mb-4 md:mb-8 bg-white dark:bg-dark-card p-4 md:p-6 rounded-xl 
               shadow-aura border border-surface-200 dark:border-dark-border transition-colors duration-200">
               <form onSubmit={handleAddProject}>
@@ -314,6 +321,18 @@ const AuraBoard = () => {
               onMoveDown={moveProjectDown}
               allTasks={getAllTasks()}
             />
+          )}
+
+          {currentView === 'canvas' && (
+            <div className="bg-white dark:bg-dark-card rounded-xl shadow-aura border 
+              border-surface-200 dark:border-dark-border transition-colors duration-200">
+              <CanvasView 
+                projectId={selectedProjectId || (projects[0] && projects[0].id)} 
+                onProjectSelect={setSelectedProjectId}
+                projects={projects}
+                onUpdateProject={handleUpdateProject}
+              />
+            </div>
           )}
 
           {currentView === 'calendar' && (

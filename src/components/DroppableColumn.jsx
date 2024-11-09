@@ -14,7 +14,8 @@ const DroppableColumn = ({
   onUpdateTask, 
   onUpdateColumn,
   projectLabels,
-  onCreateLabel
+  onCreateLabel,
+  allProjectTasks // New prop to receive all tasks from the project
 }) => {
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -41,14 +42,7 @@ const DroppableColumn = ({
     setShowMenu(false);
   };
 
-  // Get all tasks from all columns for relationship management
-  const getAllTasks = () => {
-    const allColumns = column.projectColumns || [];
-    return allColumns.reduce((acc, col) => [...acc, ...col.tasks], []);
-  };
-
   const handleTaskUpdate = (updatedTask) => {
-    // Directly call onUpdateTask with the updated task
     onUpdateTask(updatedTask);
   };
 
@@ -120,7 +114,7 @@ const DroppableColumn = ({
               onUpdateTask={handleTaskUpdate}
               availableLabels={projectLabels}
               onCreateLabel={onCreateLabel}
-              availableTasks={getAllTasks()}
+              availableTasks={allProjectTasks} // Pass all project tasks for relationships
             />
           ))}
         </SortableContext>

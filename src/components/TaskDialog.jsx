@@ -16,7 +16,8 @@ const TaskDialog = ({
   onUpdate,
   availableLabels = [],
   onCreateLabel,
-  availableTasks = []
+  availableTasks = [],
+  availableColumns = []
 }) => {
   const { theme } = useTheme();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 640);
@@ -39,6 +40,8 @@ const TaskDialog = ({
     hierarchyType,
     setHierarchyType,
     relationships,
+    status,
+    setStatus,
     handleSubmit,
     handleLabelToggle,
     handleAddLabel,
@@ -74,6 +77,18 @@ const TaskDialog = ({
   };
 
   const isNewTask = !task.id;
+
+  // Create current task metadata for relationship context
+  const currentTaskMetadata = {
+    id: task.id,
+    title,
+    mainStatus: status,
+    statusColor: availableColumns.find(col => col.title === status)?.color,
+    priority,
+    dueDate,
+    labels: selectedLabels,
+    relationships
+  };
 
   return (
     <div 
@@ -118,6 +133,9 @@ const TaskDialog = ({
               setStartDate={setStartDate}
               dueDate={dueDate}
               setDueDate={setDueDate}
+              status={status}
+              setStatus={setStatus}
+              availableColumns={availableColumns}
             />
 
             <TaskHierarchySelect
@@ -143,7 +161,7 @@ const TaskDialog = ({
 
             {!isNewTask && (
               <TaskRelationshipSelect
-                currentTaskId={task.id}
+                currentTask={currentTaskMetadata}
                 relationships={relationships}
                 availableTasks={availableTasks}
                 onAddRelationship={handleAddRelationship}
