@@ -58,7 +58,6 @@ const TaskMetadataForm = ({
             lineHeight: '1.5',
           }}
           rows={1}
-          autoFocus
         />
       </div>
 

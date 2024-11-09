@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import TaskMetadataForm from './TaskMetadataForm';
 import TaskPrioritySelect from './TaskPrioritySelect';
@@ -19,6 +19,7 @@ const TaskDialog = ({
   availableTasks = []
 }) => {
   const { theme } = useTheme();
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 640);
   const {
     title,
     setTitle,
@@ -46,6 +47,15 @@ const TaskDialog = ({
   } = useTaskForm(task, onUpdate);
 
   const { handleBackdropClick } = useDialog(isOpen, onClose);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 640);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -97,7 +107,8 @@ const TaskDialog = ({
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-6 space-y-8">
+          <div className={`flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-6 space-y-8 
+            ${isMobile ? 'pb-24' : ''}`}>
             <TaskMetadataForm
               title={title}
               setTitle={setTitle}
@@ -142,9 +153,9 @@ const TaskDialog = ({
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-surface-200 
+          <div className={`flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-surface-200 
             dark:border-dark-border bg-surface-50/50 dark:bg-dark-hover/30 flex-shrink-0 
-            transition-colors duration-200">
+            transition-colors duration-200 ${isMobile ? 'fixed bottom-0 left-0 right-0 shadow-lg' : ''}`}>
             <button
               onClick={() => handleClose(false)}
               className="px-4 py-2 text-surface-700 dark:text-dark-text hover:text-surface-800 
@@ -157,7 +168,7 @@ const TaskDialog = ({
               onClick={() => handleClose(true)}
               className={`px-4 py-2 ${theme.colors.primary} text-white rounded-md hover:opacity-90 
                 transition-all duration-200 font-medium shadow-sm hover:shadow dark:shadow-none 
-                touch-manipulation min-h-[44px]`}
+                touch-manipulation min-h-[44px] ${isMobile ? 'flex-1' : ''}`}
             >
               {isNewTask ? 'Create Task' : 'Save Changes'}
             </button>

@@ -32,6 +32,7 @@ const SideMenu = ({
   const [isResizing, setIsResizing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const { theme, setTheme, isDark, toggleDarkMode } = useTheme();
+  const [touchStart, setTouchStart] = useState(null);
 
   const getIconSize = (isCollapsed) => isCollapsed ? 24 : 20;
 
@@ -74,6 +75,29 @@ const SideMenu = ({
     setIsResizing(false);
   }, []);
 
+  // Mobile touch handlers
+  const handleTouchStart = (e) => {
+    setTouchStart(e.touches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!touchStart) return;
+
+    const currentTouch = e.touches[0].clientX;
+    const diff = touchStart - currentTouch;
+
+    // If swiping left (diff > 0) and menu is open, or
+    // swiping right (diff < 0) and menu is closed
+    if ((diff > 50 && !isCollapsed) || (diff < -50 && isCollapsed)) {
+      setTouchStart(null);
+      onToggleCollapse();
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setTouchStart(null);
+  };
+
   useEffect(() => {
     if (isResizing) {
       document.addEventListener('mousemove', handleMouseMove);
@@ -87,7 +111,15 @@ const SideMenu = ({
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
   if (isMobile && isCollapsed) {
-    return null;
+    return (
+      <button
+        onClick={onToggleCollapse}
+        className="fixed top-[70px] left-0 z-50 p-3 bg-surface-50 dark:bg-dark-bg rounded-r-lg shadow-lg border border-l-0 border-surface-200 dark:border-dark-border"
+        aria-label="Open menu"
+      >
+        <Filter size={24} className="text-surface-600 dark:text-dark-text" />
+      </button>
+    );
   }
 
   return (
@@ -95,7 +127,7 @@ const SideMenu = ({
       {/* Mobile Overlay */}
       {isMobile && !isCollapsed && (
         <div 
-          className="fixed inset-0 bg-black/30 z-20"
+          className="fixed inset-0 bg-black/30 z-40"
           onClick={onToggleCollapse}
         />
       )}
@@ -109,10 +141,14 @@ const SideMenu = ({
           border-r border-surface-200 dark:border-dark-border 
           transition-all duration-300 ease-in-out 
           ${isResizing ? 'select-none' : ''} 
-          flex flex-col z-20
-          h-[calc(100vh-57px)] shadow-sm overflow-hidden
+          flex flex-col z-50
+          h-[calc(100vh-57px)] shadow-lg overflow-hidden
           ${isMobile ? (isCollapsed ? '-translate-x-full' : 'translate-x-0') : ''}
+          ${isMobile ? 'top-[57px] left-0' : ''}
         `}
+        onTouchStart={isMobile ? handleTouchStart : undefined}
+        onTouchMove={isMobile ? handleTouchMove : undefined}
+        onTouchEnd={isMobile ? handleTouchEnd : undefined}
       >
         <div className="flex-1 p-2 overflow-y-auto">
           {/* Desktop Toggle */}
