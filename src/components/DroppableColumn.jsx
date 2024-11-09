@@ -51,7 +51,7 @@ const DroppableColumn = ({
     <div
       ref={setNodeRef}
       className="flex-shrink-0 w-[280px] md:w-80 bg-white dark:bg-dark-card rounded-lg shadow-aura 
-        border border-surface-200 dark:border-dark-border transition-colors duration-200"
+        border border-surface-200 dark:border-dark-border transition-colors duration-200 p-2"
     >
       {/* Header */}
       <div className="p-3 border-b border-surface-200 dark:border-dark-border flex items-center 
@@ -102,7 +102,7 @@ const DroppableColumn = ({
       </div>
 
       {/* Tasks */}
-      <div className="p-2 space-y-2 min-h-[200px]">
+      <div className="p-3 space-y-2 min-h-[200px]">
         <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           {tasks.map((task) => (
             <SortableItem

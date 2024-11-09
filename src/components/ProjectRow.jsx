@@ -168,7 +168,7 @@ const ProjectRow = ({
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex gap-3 md:gap-6 overflow-x-auto pb-4 mt-4 snap-x snap-mandatory touch-pan-x">
+          <div className="flex gap-4 md:gap-6 overflow-x-auto pb-6 pt-2 px-4 mt-4 snap-x snap-mandatory touch-pan-x">
             {project.columns.map((column) => (
               <div key={column.id} className="snap-center">
                 <DroppableColumn

@@ -6,7 +6,7 @@ import { Menu, BookOpen, Settings as SettingsIcon, Grid, X } from 'lucide-react'
 import { useClickOutside } from './hooks/useClickOutside';
 
 function AppContent() {
-  const { theme, isDark, toggleDarkMode } = useTheme();
+  const { theme, isDark, toggleDarkMode, setTheme } = useTheme();
   const [showAppSwitcher, setShowAppSwitcher] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const appSwitcherRef = useRef(null);
@@ -109,10 +109,7 @@ function AppContent() {
             <div className="p-4">
               <ThemePicker 
                 selectedTheme={theme}
-                onThemeSelect={(newTheme) => {
-                  const { setTheme } = useTheme();
-                  setTheme(newTheme);
-                }}
+                onThemeSelect={setTheme}
                 isDark={isDark}
                 onToggleMode={toggleDarkMode}
               />

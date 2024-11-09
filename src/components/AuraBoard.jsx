@@ -9,302 +9,116 @@ import { useProjectSort } from '../hooks/useProjectSort';
 
 const defaultProject = {
   id: 'default',
-  title: 'Main Project',
-  position: 0,
-  color: {
-    name: 'aura',
-    bg: 'bg-aura-500',
-    text: 'text-aura-500',
-    light: 'bg-aura-100',
-    lightText: 'text-aura-800'
-  },
-  labels: [
-    {
-      id: 'label-1',
-      text: 'Bug',
-      color: { name: 'red', bg: 'bg-status-error', text: 'text-status-error', light: 'bg-red-50', lightText: 'text-red-800' }
-    },
-    {
-      id: 'label-2',
-      text: 'Feature',
-      color: { name: 'green', bg: 'bg-status-success', text: 'text-status-success', light: 'bg-green-50', lightText: 'text-green-800' }
-    },
-    {
-      id: 'label-3',
-      text: 'Enhancement',
-      color: { name: 'blue', bg: 'bg-status-info', text: 'text-status-info', light: 'bg-blue-50', lightText: 'text-blue-800' }
-    }
-  ],
+  title: 'My First Project',
+  color: colors[0],
   columns: [
-    { 
-      id: 'todo', 
-      title: 'To Do', 
-      tasks: [],
-      color: {
-        name: 'info',
-        bg: 'bg-status-info',
-        text: 'text-status-info',
-        light: 'bg-blue-100',
-        lightText: 'text-blue-800'
-      }
-    },
-    { 
-      id: 'inProgress', 
-      title: 'In Progress', 
-      tasks: [],
-      color: {
-        name: 'warning',
-        bg: 'bg-status-warning',
-        text: 'text-status-warning',
-        light: 'bg-amber-100',
-        lightText: 'text-amber-800'
-      }
-    },
-    { 
-      id: 'done', 
-      title: 'Done', 
-      tasks: [],
-      color: {
-        name: 'success',
-        bg: 'bg-status-success',
-        text: 'text-status-success',
-        light: 'bg-green-100',
-        lightText: 'text-green-800'
-      }
-    },
+    { id: 'todo', title: 'To Do', tasks: [] },
+    { id: 'in-progress', title: 'In Progress', tasks: [] },
+    { id: 'done', title: 'Done', tasks: [] }
   ]
 };
 
 const AuraBoard = () => {
-  const [projects, setProjects] = useState(null);
+  const [projects, setProjects] = useState(() => {
+    const savedState = loadState();
+    return savedState?.projects || [defaultProject];
+  });
+
+  const [currentView, setCurrentView] = useState(() => {
+    const savedState = loadState();
+    return savedState?.currentView || 'board';
+  });
+
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [newProjectTitle, setNewProjectTitle] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentView, setCurrentView] = useState('board');
-  const [isMenuCollapsed, setIsMenuCollapsed] = useState(window.innerWidth < 768);
+  const [isMenuCollapsed, setIsMenuCollapsed] = useState(() => {
+    const savedState = loadState();
+    return savedState?.menuCollapsed || false;
+  });
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  const {
-    moveProjectUp,
-    moveProjectDown,
-    sortedProjects
-  } = useProjectSort(projects || [], setProjects);
+  const { moveProjectUp, moveProjectDown } = useProjectSort(projects, setProjects);
 
   useEffect(() => {
-    const initializeState = async () => {
-      try {
-        const savedState = await loadState();
-        if (savedState?.projects) {
-          console.log('Loaded saved state:', savedState.projects);
-          setProjects(savedState.projects);
-        } else {
-          console.log('No saved state found, using default');
-          setProjects([defaultProject]);
-        }
-      } catch (error) {
-        console.error('Error loading state:', error);
-        setProjects([defaultProject]);
-      }
-    };
-
-    initializeState();
-  }, []);
-
-  useEffect(() => {
-    const persistState = async () => {
-      if (projects) {
-        try {
-          await saveState({ projects });
-          console.log('State saved successfully');
-        } catch (error) {
-          console.error('Error saving state:', error);
-        }
-      }
-    };
-
-    persistState();
-  }, [projects]);
+    saveState({ projects, currentView, menuCollapsed: isMenuCollapsed });
+  }, [projects, currentView, isMenuCollapsed]);
 
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      if (mobile && !isMobile) {
-        setIsMenuCollapsed(true);
-      }
+      setIsMobile(window.innerWidth < 768);
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [isMobile]);
-
-  const getAllProjectTasks = (project) => {
-    return project.columns.reduce((acc, column) => [...acc, ...column.tasks], []);
-  };
-
-  const getAllTasks = () => {
-    return projects?.reduce((acc, project) => [...acc, ...getAllProjectTasks(project)], []) || [];
-  };
+  }, []);
 
   const handleAddProject = (e) => {
     e.preventDefault();
-    if (newProjectTitle.trim()) {
-      const newProject = {
-        id: `project-${Date.now()}`,
-        title: newProjectTitle.trim(),
-        position: projects ? projects.length : 0,
-        color: {
-          name: 'aura',
-          bg: 'bg-aura-500',
-          text: 'text-aura-500',
-          light: 'bg-aura-100',
-          lightText: 'text-aura-800'
-        },
-        labels: [],
-        columns: [
-          { 
-            id: `todo-${Date.now()}`, 
-            title: 'To Do', 
-            tasks: [],
-            color: {
-              name: 'info',
-              bg: 'bg-status-info',
-              text: 'text-status-info',
-              light: 'bg-blue-100',
-              lightText: 'text-blue-800'
-            }
-          },
-          { 
-            id: `progress-${Date.now()}`, 
-            title: 'In Progress', 
-            tasks: [],
-            color: {
-              name: 'warning',
-              bg: 'bg-status-warning',
-              text: 'text-status-warning',
-              light: 'bg-amber-100',
-              lightText: 'text-amber-800'
-            }
-          },
-          { 
-            id: `done-${Date.now()}`, 
-            title: 'Done', 
-            tasks: [],
-            color: {
-              name: 'success',
-              bg: 'bg-status-success',
-              text: 'text-status-success',
-              light: 'bg-green-100',
-              lightText: 'text-green-800'
-            }
-          },
-        ]
-      };
-      setProjects(projects ? [...projects, newProject] : [newProject]);
-      setNewProjectTitle('');
-      setIsAddingProject(false);
-    }
-  };
+    if (!newProjectTitle.trim()) return;
 
-  const handleCreateLabel = (projectId, newLabel) => {
-    if (!projects) return;
-    setProjects(projects.map(project => {
-      if (project.id === projectId) {
-        return {
-          ...project,
-          labels: [...(project.labels || []), newLabel]
-        };
-      }
-      return project;
-    }));
+    const newProject = {
+      id: Date.now().toString(),
+      title: newProjectTitle.trim(),
+      color: colors[Math.floor(Math.random() * colors.length)],
+      columns: [
+        { id: 'todo', title: 'To Do', tasks: [] },
+        { id: 'in-progress', title: 'In Progress', tasks: [] },
+        { id: 'done', title: 'Done', tasks: [] }
+      ]
+    };
+
+    setProjects([...projects, newProject]);
+    setNewProjectTitle('');
+    setIsAddingProject(false);
   };
 
   const handleUpdateProject = (updatedProject) => {
-    if (!projects) return;
-    setProjects(projects.map(project =>
-      project.id === updatedProject.id ? updatedProject : project
+    setProjects(projects.map(p => 
+      p.id === updatedProject.id ? updatedProject : p
     ));
   };
 
   const handleDeleteProject = (projectId) => {
-    if (!projects || projects.length <= 1) return;
-    const updatedProjects = projects
-      .filter(project => project.id !== projectId)
-      .map((project, index) => ({
-        ...project,
-        position: index
-      }));
-    setProjects(updatedProjects);
+    setProjects(projects.filter(p => p.id !== projectId));
   };
 
-  const handleUpdateColumn = (projectId, updatedColumn) => {
-    if (!projects) return;
-    setProjects(projects.map(project => 
-      project.id === projectId
-        ? {
-            ...project,
-            columns: project.columns.map(col =>
-              col.id === updatedColumn.id ? updatedColumn : col
-            )
-          }
-        : project
-    ));
+  const getAllTasks = () => {
+    return projects.reduce((acc, project) => {
+      const projectTasks = project.columns.reduce((tasks, column) => {
+        return [...tasks, ...column.tasks.map(task => ({
+          ...task,
+          projectId: project.id,
+          projectTitle: project.title,
+          columnId: column.id,
+          columnTitle: column.title
+        }))];
+      }, []);
+      return [...acc, ...projectTasks];
+    }, []);
   };
 
-  if (projects === null) {
-    return (
-      <div className="flex items-center justify-center h-screen dark:bg-dark-bg transition-colors duration-200">
-        <div className="text-lg text-surface-600 dark:text-dark-text">Loading...</div>
-      </div>
-    );
-  }
-
-  const filteredProjects = searchQuery && sortedProjects
-    ? sortedProjects.filter(project => {
-        if (project.title.toLowerCase().includes(searchQuery.toLowerCase())) {
-          return true;
-        }
-        return project.columns.some(column =>
-          column.tasks.some(task =>
-            task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            task.description?.toLowerCase().includes(searchQuery.toLowerCase())
-          )
-        );
-      })
-    : sortedProjects || [];
+  const filteredProjects = projects.filter(project =>
+    project.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const renderBoardView = () => (
-    <div className="space-y-4 md:space-y-8">
-      {filteredProjects.map((project, index) => {
-        const projectWithColumnInfo = {
-          ...project,
-          columns: project.columns.map(column => ({
-            ...column,
-            projectColumns: project.columns
-          }))
-        };
-
-        return (
-          <ProjectRow
-            key={project.id}
-            project={projectWithColumnInfo}
-            onUpdateProject={handleUpdateProject}
-            onDeleteProject={handleDeleteProject}
-            onUpdateColumn={(updatedColumn) => handleUpdateColumn(project.id, updatedColumn)}
-            onCreateLabel={(newLabel) => handleCreateLabel(project.id, newLabel)}
-            onMoveUp={moveProjectUp}
-            onMoveDown={moveProjectDown}
-            isFirst={index === 0}
-            isLast={index === filteredProjects.length - 1}
-            allTasks={getAllTasks()}
-          />
-        );
-      })}
+    <div className="space-y-8">
+      {filteredProjects.map((project, index) => (
+        <ProjectRow
+          key={project.id}
+          project={project}
+          onUpdateProject={handleUpdateProject}
+          onDeleteProject={handleDeleteProject}
+          onMoveUp={index > 0 ? () => moveProjectUp(index) : null}
+          onMoveDown={index < projects.length - 1 ? () => moveProjectDown(index) : null}
+        />
+      ))}
     </div>
   );
 
   return (
-    <div className="flex flex-col md:flex-row h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden">
       <SideMenu
         view={currentView}
         onViewChange={setCurrentView}
@@ -313,9 +127,14 @@ const AuraBoard = () => {
         isMobile={isMobile}
       />
       
-      <div className="flex-1 overflow-x-hidden overflow-y-auto">
+      <main 
+        className="flex-1 overflow-x-hidden overflow-y-auto"
+        style={{ 
+          marginLeft: isMobile ? 0 : (isMenuCollapsed ? '72px' : '220px'),
+          width: isMobile ? '100%' : `calc(100% - ${isMenuCollapsed ? '72px' : '220px'})`,
+        }}
+      >
         <div className="p-3 md:p-6">
-          {/* Header Section */}
           <div className="mb-4 md:mb-8">
             <div className="flex justify-between items-center mb-4">
               <div className="text-xl md:text-2xl font-bold text-surface-800 dark:text-dark-text">
@@ -337,7 +156,6 @@ const AuraBoard = () => {
               </button>
             </div>
 
-            {/* Search Bar */}
             <div className="relative">
               <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 
                 text-surface-400 dark:text-dark-text/60" />
@@ -356,7 +174,6 @@ const AuraBoard = () => {
             </div>
           </div>
 
-          {/* New Project Form */}
           {isAddingProject && (
             <div className="mb-4 md:mb-8 bg-white dark:bg-dark-card p-4 md:p-6 rounded-xl 
               shadow-aura border border-surface-200 dark:border-dark-border transition-colors duration-200">
@@ -407,7 +224,6 @@ const AuraBoard = () => {
             </div>
           )}
 
-          {/* Views */}
           {currentView === 'board' && renderBoardView()}
 
           {currentView === 'list' && (
@@ -457,7 +273,7 @@ const AuraBoard = () => {
             </div>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 };
