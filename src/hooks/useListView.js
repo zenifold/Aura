@@ -23,7 +23,11 @@ export const useListView = (projects = []) => {
           projectTitle: project.title,
           projectColor: project.color,
           mainStatus: column.title,
-          statusColor: column.color // Include column color as status color
+          statusColor: {
+            light: column.color?.light || 'bg-surface-100',
+            text: column.color?.text || 'text-surface-600',
+            dark: column.color?.dark || 'dark:bg-dark-hover'
+          }
         }))
       )
     );
@@ -31,24 +35,29 @@ export const useListView = (projects = []) => {
 
   // Sort tasks
   const sortedTasks = useMemo(() => {
+    if (!allTasks || allTasks.length === 0) return [];
+    
     return [...allTasks].sort((a, b) => {
       let comparison = 0;
       
       switch (sortBy) {
         case 'title':
-          comparison = a.title.localeCompare(b.title);
+          comparison = (a.title || '').localeCompare(b.title || '');
           break;
         case 'dueDate':
           comparison = (a.dueDate || '').localeCompare(b.dueDate || '');
           break;
-        case 'mainStatus':
-          comparison = a.mainStatus.localeCompare(b.mainStatus);
+        case 'status':
+          comparison = (a.mainStatus || '').localeCompare(b.mainStatus || '');
           break;
         case 'priority':
           const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
           const aPriority = a.priority?.id ? priorityOrder[a.priority.id] : 4;
           const bPriority = b.priority?.id ? priorityOrder[b.priority.id] : 4;
           comparison = aPriority - bPriority;
+          break;
+        case 'project':
+          comparison = (a.projectTitle || '').localeCompare(b.projectTitle || '');
           break;
         default:
           comparison = 0;
@@ -60,6 +69,10 @@ export const useListView = (projects = []) => {
 
   // Group tasks
   const groupedTasks = useMemo(() => {
+    if (!sortedTasks || sortedTasks.length === 0) {
+      return { 'No Tasks': [] };
+    }
+
     if (groupBy === 'none') {
       return { 'All Tasks': sortedTasks };
     }
@@ -69,10 +82,10 @@ export const useListView = (projects = []) => {
       
       switch (groupBy) {
         case 'project':
-          groupKey = task.projectTitle;
+          groupKey = task.projectTitle || 'No Project';
           break;
         case 'status':
-          groupKey = task.mainStatus;
+          groupKey = task.mainStatus || 'No Status';
           break;
         case 'dueDate':
           if (!task.dueDate) {

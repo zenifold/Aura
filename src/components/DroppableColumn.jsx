@@ -47,6 +47,11 @@ const DroppableColumn = ({
     return allColumns.reduce((acc, col) => [...acc, ...col.tasks], []);
   };
 
+  const handleTaskUpdate = (updatedTask) => {
+    // Directly call onUpdateTask with the updated task
+    onUpdateTask(updatedTask);
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -112,7 +117,7 @@ const DroppableColumn = ({
                 ...task,
                 statusColor: column.color // Pass column color as status color
               }}
-              onUpdateTask={(updatedTask) => onUpdateTask(column.id, updatedTask)}
+              onUpdateTask={handleTaskUpdate}
               availableLabels={projectLabels}
               onCreateLabel={onCreateLabel}
               availableTasks={getAllTasks()}

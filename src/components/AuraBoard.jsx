@@ -12,9 +12,36 @@ const defaultProject = {
   title: 'My First Project',
   color: colors[0],
   columns: [
-    { id: 'todo', title: 'To Do', tasks: [] },
-    { id: 'in-progress', title: 'In Progress', tasks: [] },
-    { id: 'done', title: 'Done', tasks: [] }
+    { 
+      id: 'todo', 
+      title: 'To Do',
+      color: {
+        light: 'bg-surface-100',
+        text: 'text-surface-600',
+        dark: 'dark:bg-dark-hover'
+      },
+      tasks: [] 
+    },
+    { 
+      id: 'in-progress', 
+      title: 'In Progress',
+      color: {
+        light: 'bg-blue-50',
+        text: 'text-blue-600',
+        dark: 'dark:bg-blue-500/10'
+      },
+      tasks: [] 
+    },
+    { 
+      id: 'done', 
+      title: 'Done',
+      color: {
+        light: 'bg-green-50',
+        text: 'text-green-600',
+        dark: 'dark:bg-green-500/10'
+      },
+      tasks: [] 
+    }
   ]
 };
 
@@ -62,9 +89,36 @@ const AuraBoard = () => {
       title: newProjectTitle.trim(),
       color: colors[Math.floor(Math.random() * colors.length)],
       columns: [
-        { id: 'todo', title: 'To Do', tasks: [] },
-        { id: 'in-progress', title: 'In Progress', tasks: [] },
-        { id: 'done', title: 'Done', tasks: [] }
+        { 
+          id: 'todo', 
+          title: 'To Do',
+          color: {
+            light: 'bg-surface-100',
+            text: 'text-surface-600',
+            dark: 'dark:bg-dark-hover'
+          },
+          tasks: [] 
+        },
+        { 
+          id: 'in-progress', 
+          title: 'In Progress',
+          color: {
+            light: 'bg-blue-50',
+            text: 'text-blue-600',
+            dark: 'dark:bg-blue-500/10'
+          },
+          tasks: [] 
+        },
+        { 
+          id: 'done', 
+          title: 'Done',
+          color: {
+            light: 'bg-green-50',
+            text: 'text-green-600',
+            dark: 'dark:bg-green-500/10'
+          },
+          tasks: [] 
+        }
       ]
     };
 
@@ -84,22 +138,47 @@ const AuraBoard = () => {
   };
 
   const getAllTasks = () => {
-    return projects.reduce((acc, project) => {
-      const projectTasks = project.columns.reduce((tasks, column) => {
-        return [...tasks, ...column.tasks.map(task => ({
+    return projects.flatMap(project => 
+      project.columns.flatMap(column => 
+        column.tasks.map(task => ({
           ...task,
+          id: task.id || `task-${Date.now()}-${Math.random()}`,
+          title: task.title || '',
+          description: task.description || '',
           projectId: project.id,
           projectTitle: project.title,
-          columnId: column.id,
-          columnTitle: column.title
-        }))];
-      }, []);
-      return [...acc, ...projectTasks];
-    }, []);
+          projectColor: project.color,
+          mainStatus: column.title,
+          statusColor: column.color || {
+            light: 'bg-surface-100',
+            text: 'text-surface-600',
+            dark: 'dark:bg-dark-hover'
+          },
+          createdAt: task.createdAt || new Date().toISOString(),
+          priority: task.priority || null,
+          labels: task.labels || [],
+          hierarchyType: task.hierarchyType || 'task',
+          relationships: task.relationships || [],
+          startDate: task.startDate || null,
+          dueDate: task.dueDate || null
+        }))
+      )
+    );
   };
 
   const filteredProjects = projects.filter(project =>
-    project.title.toLowerCase().includes(searchQuery.toLowerCase())
+    project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.columns.some(column =>
+      column.tasks.some(task =>
+        task.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task.labels?.some(label =>
+          label.text.toLowerCase().includes(searchQuery.toLowerCase())
+        ) ||
+        task.tags?.some(tag =>
+          tag.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      )
+    )
   );
 
   const renderBoardView = () => (
@@ -228,7 +307,7 @@ const AuraBoard = () => {
 
           {currentView === 'list' && (
             <ListView 
-              projects={filteredProjects}
+              projects={projects}
               onUpdateProject={handleUpdateProject}
               onDeleteProject={handleDeleteProject}
               onMoveUp={moveProjectUp}
